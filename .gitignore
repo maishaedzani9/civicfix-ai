@@ -1,0 +1,36 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+.venv/
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript and Next.js
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local services and generated content
+.supabase/
+uploads/
+logs/
+*.log
+
+# Test and build artifacts
+htmlcov/
+dist/
+build/
