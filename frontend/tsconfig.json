@@ -39,6 +39,11 @@
   ],
   "exclude": [
     "node_modules",
-    "examples"
+    "examples",
+    "build",
+    "db",
+    "scripts",
+    "drizzle.config.ts",
+    "vite.config.ts"
   ]
 }
