@@ -1,37 +1,22 @@
-# CivicFix AI Frontend
+# CivicFix frontend
 
-Resident-facing web experience for CivicFix AI, a civic issue reporting platform. This milestone includes a public landing page, authentication prototypes, a resident dashboard, and an AI-assisted incident report workflow.
-
-## Routes
-
-- `/` — public product overview
-- `/login` and `/register` — authentication prototypes
-- `/dashboard` — resident report summary and status tracking
-- `/report` — AI-assisted report drafting and confirmation
-
-## Run locally
+Next.js/React/TypeScript resident reporting and operations dashboard. See the root README for the one-command local demonstration and `docs/deployment.md` for hosted configuration.
 
 ```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-## Production verification
-
-```bash
+npm ci
+npm run dev -- --hostname 127.0.0.1
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-## Current milestone scope
+Use `.env.example` for build-time public configuration. Supabase handles email/password auth, session refresh and recovery. The API receives the access token and authorises every operation; browser controls are only presentation. All data screens load the API; there are no hard-coded report references or fake success responses.
 
-The interface uses demonstration data and client-side interactions. It intentionally does not send reports to a municipality or call an AI service yet. The next milestone will connect these screens to the existing FastAPI and Supabase-compatible authentication backend.
+Browser tests require the isolated demo running at port 3000 and API port 8000:
 
-## Accessibility and trust
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
 
-- Semantic headings and labelled controls
-- Keyboard-accessible navigation and form controls
-- Editable AI suggestions that require explicit resident confirmation
-- Clear demonstration-state disclosure
-- Guidance to avoid uploading unnecessary personal information
+The local demo login deliberately offers role personas and never connects to a real municipality or production database. Disable demo mode for hosted deployment.

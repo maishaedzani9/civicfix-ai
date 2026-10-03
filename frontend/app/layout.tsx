@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CivicFix AI | Report infrastructure problems",
-  description: "Submit and track AI-assisted infrastructure reports for your community.",
+  description:
+    "Submit and track AI-assisted infrastructure reports for your community.",
   other: {
     "codex-preview": "development",
   },

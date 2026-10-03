@@ -1,140 +1,91 @@
 # CivicFix AI
 
-An AI-assisted civic infrastructure reporting platform for South African communities.
+A civic infrastructure reporting portfolio built by **Edzani Maisha**. Residents create confirmed reports with locations and photos; operations staff acknowledge, assign and resolve them. CivicFix is not an official municipal integration or emergency dispatcher.
 
-Residents can report potholes, water leaks, electricity faults, broken streetlights, illegal dumping, and related infrastructure problems. A conversational assistant collects missing details and converts the conversation into a structured report. Municipal or campus operations staff can triage, assign, update, and analyse incidents from a dashboard.
+## Implemented
 
-## Why this project matters
+- Responsive Next.js resident and operations experiences
+- Supabase email registration, sign-in, sign-out and password recovery
+- Manual reporting and conversational, validated AI drafts with human confirmation
+- Rule-based drafting when an AI key is absent, explicitly labelled
+- Address and OpenStreetMap location selection; validated, private photo evidence
+- Real report creation, reference numbers, department routing, pagination and tracking
+- Department-scoped staff queues, assignments to departments/personnel, status transitions
+- Public updates, private staff notes, audited category/urgency corrections
+- Operational counts, map, response targets, timing aggregates and safe CSV export
+- Server-side ownership/role checks, private evidence access and duplicate-submission protection
+- Isolated local demonstration with resident, staff, manager and administrator personas
+- Backend integration tests, signed-token tests, browser journeys and application CI
 
-Most portfolio chatbots stop at question-and-answer. CivicFix AI connects AI to a complete operational workflow:
+Hosted Supabase email delivery, real AI calls and public hosting require external configuration. The local demo uses a separate SQLite database and rule-based drafts, never real municipal delivery.
 
-1. Collect a report through conversation.
-2. Validate location and supporting evidence.
-3. Classify the category and suggested urgency.
-4. Require human confirmation before submission.
-5. Route the incident to a responsible department.
-6. Track status, ownership, and response time.
+## Try the complete local demo
 
-The system is designed as a portfolio project, not as an official emergency service. The chatbot must always direct immediate danger to the appropriate emergency channel.
+Requirements: Python 3.12+ and Node.js 22+.
 
-## Phase 1 status
-
-- [x] Product requirements and user stories
-- [x] Architecture and trust boundaries
-- [x] PostgreSQL schema with constraints and audit history
-- [x] REST API contract
-- [x] AI safety and structured-output contract
-- [x] Security and privacy checklist
-- [x] Automated Phase 1 validation
-- [x] FastAPI backend foundation
-- [x] JWT verification and PostgreSQL connection layer
-- [x] Incident create/list/detail and workflow endpoints
-- [ ] Next.js frontend
-- [ ] AI provider integration
-- [ ] Deployment
-
-## Planned technology stack
-
-| Area | Technology |
-|---|---|
-| Web application | Next.js, React, TypeScript, Tailwind CSS |
-| API | Python, FastAPI, Pydantic |
-| Database | PostgreSQL |
-| Authentication and storage | Supabase |
-| AI orchestration | Provider-independent structured-output adapter |
-| Maps | Leaflet and OpenStreetMap |
-| Testing | Pytest, Vitest, Playwright |
-| Local development | Docker Compose |
-
-## Repository structure
-
-```text
-civicfix-ai/
-├── database/
-│   ├── schema.sql
-│   └── seed.sql
-├── docs/
-│   ├── ai-contract.md
-│   ├── api-contract.md
-│   ├── architecture.md
-│   ├── backend.md
-│   ├── product-requirements.md
-│   └── security.md
-├── scripts/
-│   └── validate_phase1.py
-├── tests/
-│   └── test_phase1_contracts.py
-├── .github/workflows/
-│   └── phase1-validation.yml
-├── .gitignore
-├── backend/
-│   ├── app/                       # FastAPI application
-│   ├── tests/                     # backend domain tests
-│   ├── .env.example
-│   ├── Dockerfile
-│   └── requirements.txt
-├── CONTRIBUTING.md
-├── LICENSE
-├── README.md
-└── pyproject.toml
+```bash
+python -m venv .venv
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
+cd frontend
+npm ci
+cd ..
+python scripts/run_demo.py
 ```
 
-## Validate Phase 1
+Open **http://localhost:3000/login**. Choose resident, submit a water-leak report, sign out, choose manager, acknowledge and assign it, then move it to in progress and resolved. Return as resident to verify the public updates. Staff and managers are scoped to Water and Sanitation in the demo. The administrator can review every department.
 
-The validation uses only the Python standard library:
+Drafts stay in tab session storage, separated by user. The demo database is `civicfix-demo.db`; restart preserves reports and generates new demo access tokens. Demo mode is refused unless the environment is explicitly `demo`, the database is SQLite and a strong demo signing secret is supplied. Never publish demo mode with real data.
+
+## Run with Supabase
+
+Follow [deployment setup](docs/deployment.md). Apply `database/schema.sql`, `database/seed.sql`, then `database/migration_004_workflows.sql` to a fresh Supabase database. Existing Phase 1 databases need the migration, not a reapplication of the original schema.
+
+Copy `backend/.env.example` to `backend/.env`, and `frontend/.env.example` to `frontend/.env.local`. Supply your project configuration. The browser gets only the public publishable/anon key; the service key and AI key stay on the API server.
+
+```bash
+cd backend
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+# another terminal
+cd frontend
+npm run dev -- --hostname 127.0.0.1
+```
+
+## Validation
 
 ```bash
 python scripts/validate_phase1.py
 python -m unittest discover -s tests -v
+# Bash: PYTHONPATH=backend pytest backend/tests -q
+# PowerShell: $env:PYTHONPATH="backend"; pytest backend/tests -q
+cd frontend
+npm run lint
+npm run typecheck
+npm run build
+# Start the demo in another terminal before the browser tests:
+npx playwright install chromium
+npm run test:e2e
 ```
 
-## Core documentation
+CI also applies the Supabase-compatible schema and migrations to disposable PostgreSQL, checks profile provisioning, and exercises the ORM repository. Local PostgreSQL tests are skipped unless `TEST_DATABASE_URL` points to a disposable empty database. Never set it to a real project database.
 
-- [Product requirements](docs/product-requirements.md)
-- [System architecture](docs/architecture.md)
-- [API contract](docs/api-contract.md)
-- [AI contract](docs/ai-contract.md)
-- [Security model](docs/security.md)
-- [Database schema](database/schema.sql)
+## Structure
 
-## Roadmap
+| Path | Purpose |
+|---|---|
+| `frontend/` | Next.js pages, forms, maps, API/auth clients, browser tests |
+| `backend/app/` | FastAPI, JWT verification, permissions, workflow and AI adapter |
+| `backend/tests/` | Domain, integration, provider, authentication and PostgreSQL checks |
+| `database/` | Supabase schema, department/category seed and migration |
+| `scripts/` | Local demo, validation and expired conversation cleanup |
+| `docs/` | Product, architecture, API, AI, security and deployment documentation |
 
-### Phase 2 — Backend foundation
+## Release status and limits
 
-- [x] FastAPI application and health endpoints
-- [x] Supabase-compatible JWT verification
-- [x] Async PostgreSQL connection
-- [x] Incident create, list, and detail operations
-- [x] Status transition rules and history writes
-- [x] Cursor pagination and role-scoped queries
-- [ ] Assignment and public/internal update endpoints
-- [ ] Disposable-database integration tests
+The code supports the complete portfolio reporting workflow. Live account verification, object storage and paid AI access must be tested against the configured accounts before a public release. There is no municipality dispatch integration. The initial AI adapter uses a compatible structured-output Chat Completions endpoint; provider outputs are validated and cannot call incident/workflow actions.
 
-### Phase 3 — Resident experience
-
-- Responsive report flow
-- Conversational AI interface
-- Image upload and map selection
-- Report confirmation and tracking
-
-### Phase 4 — Operations dashboard
-
-- Staff queues and assignment
-- Map and SLA views
-- Status updates and internal notes
-- Analytics and CSV export
-
-### Phase 5 — Portfolio release
-
-- End-to-end tests
-- Accessibility and security review
-- Seeded demonstration environment
-- Architecture diagram, screenshots, and demo video
-- Public deployment
-
-## Author
-
-Edzani Maisha — final-year Computer Science and Electronics student focused on AI, machine learning, and practical software systems.
+Rate limits are per API worker; multiple replicas need a shared gateway limiter. Photo re-encoding removes embedded metadata, but it does not automatically redact faces or number plates. Search and status filtering cover loaded pages; the UI offers pagination and says when older reports remain. Response targets are illustrative portfolio targets, not service commitments. Run expired-conversation cleanup daily. A demo video and real hosted-service smoke test remain release tasks.
 
 ## License
 

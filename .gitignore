@@ -34,3 +34,9 @@ logs/
 htmlcov/
 dist/
 build/
+*.db
+*.db-shm
+*.db-wal
+frontend/test-results/
+frontend/playwright-report/
+.next-e2e/
