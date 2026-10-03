@@ -1,0 +1,67 @@
+name: Application checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: civicfix_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt 'psycopg[binary]==3.3.6'
+      - run: pytest backend/tests -q
+        env:
+          PYTHONPATH: backend
+          TEST_DATABASE_URL: postgresql://postgres:test-password@localhost:5432/civicfix_test
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint && npm run typecheck && npm run build
+        working-directory: frontend
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: |
+          python scripts/run_demo.py > /tmp/civicfix-demo.log 2>&1 &
+          for n in $(seq 1 30); do
+            if curl -sf http://localhost:8000/api/v1/health && curl -sf http://localhost:3000/login > /dev/null; then break; fi
+            sleep 2
+          done
+          cd frontend
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure
+          path: |
+            frontend/test-results
+            /tmp/civicfix-demo.log

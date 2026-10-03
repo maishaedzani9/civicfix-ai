@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import Actor, Role, get_actor
@@ -30,10 +30,14 @@ async def readiness() -> dict[str, str]:
 @router.post("/incidents", response_model=IncidentRead, status_code=status.HTTP_201_CREATED, tags=["incidents"])
 async def create_incident(
     payload: IncidentCreate,
+    idempotency_key: str | None = Header(default=None, min_length=8, max_length=120),
     actor: Actor = Depends(get_actor),
     session: AsyncSession = Depends(get_session),
 ) -> IncidentRead:
-    incident = await IncidentRepository(session).create(actor, payload)
+    try:
+        incident = await IncidentRepository(session).create(actor, payload, idempotency_key)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return IncidentRead.model_validate(incident)
 
 
@@ -72,6 +76,8 @@ async def transition_incident(
 ) -> IncidentRead:
     if actor.role == Role.RESIDENT:
         raise HTTPException(status_code=403, detail="Staff access required.")
+    if payload.to_status.value == "assigned":
+        raise HTTPException(409, "Use the manager assignment action to assign a report.")
     try:
         incident = await IncidentRepository(session).transition(actor, incident_id, payload)
     except InvalidStatusTransition as exc:

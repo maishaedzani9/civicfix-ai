@@ -31,4 +31,4 @@ jobs:
       - name: Run backend domain tests
         env:
           PYTHONPATH: backend
-        run: python -m unittest discover -s backend/tests -v
+        run: python -m unittest discover -s backend/tests -p test_domain.py -v

@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     supabase_jwt_audience: str = "authenticated"
     cors_origins: str = "http://localhost:3000"
 
+    demo_mode: bool = False
+    demo_jwt_secret: str = ""
+    ai_api_key: str = ""
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = "gpt-4.1-mini"
+    evidence_directory: str = "uploads"
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    evidence_bucket: str = "incident-evidence"
+
     @property
     def allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
